@@ -1,17 +1,226 @@
-Advertising companies say advertising is necessary and impor-
-tant. It informs people about new products. Advertising 
-hoardings in the street make our environment colourful. And
-adverts on TV are often funny. Sometimes they are mini dramas
-and we wait for the next programme in the mini-drama. Adver-
-tising can educate, too. Adverts tell us about new, healthy
-products. And adverts in magazines give us ideas for how to
-look prettier, be fashionable and be successful. Without ad-
-vertising life is boring and colourless.
-But some consumers argue that advertising is a bad thing.
-They say that advertising is bad for children. Adverts make
-children "pester" their parents to buy things for them.
-Advertisers know we love our children and want to give them
-everything. So they use children's "pester power" to sell
-their products. Finally, consumers say, if there is adver-
-tising there must be rules. Some adverts advertise unhealthy
-things like cigarettes and make people waste their money.
+In computer science, the Boyer–Moore string-search algorithm is an efficient string-searching
+algorithm that is the standard benchmark for practical string-search literature.[1] It was
+developed by Robert S. Boyer and J Strother Moore in 1977.[2] The original paper contained sta-
+tic tables for computing the pattern shifts without an explanation of how to produce them. 
+The algorithm for producing the tables was published in a follow-on paper; this paper contained
+errors which were later corrected by Wojciech Rytter in 1980.[3][4] The algorithm preprocesses
+the string being searched for (the pattern), but not the string being searched in (the text).
+It is thus well-suited for applications in which the pattern is much shorter than the text or
+where it persists across multiple searches. The Boyer–Moore algorithm uses information gathe-
+red during the preprocess step to skip sections of the text, resulting in a lower constant fac-
+tor than many other string search algorithms. In general, the algorithm runs faster as the
+pattern length increases. The key features of the algorithm are to match on the tail of the
+pattern rather than the head, and to skip along the text in jumps of multiple characters rather
+than searching every single character in the text.
+
+
+Contents
+1	Definitions
+2	Description
+3	Shift rules
+3.1	The bad character rule
+3.1.1	Description
+3.1.2	Preprocessing
+3.2	The good suffix rule
+3.2.1	Description
+3.2.2	Preprocessing
+4	The Galil rule
+5	Performance
+6	Implementations
+7	Variants
+8	Notes
+9	References
+10	External links
+Definitions
+A	N	P	A	N	M	A	N	-
+P	A	N	-	-	-	-	-	-
+-	P	A	N	-	-	-	-	-
+-	-	P	A	N	-	-	-	-
+-	-	-	P	A	N	-	-	-
+-	-	-	-	P	A	N	-	-
+-	-	-	-	-	P	A	N	-
+Alignments of pattern PAN to text ANPANMAN, from k=3 to k=8. A match occurs at k=5.
+S[i] denotes the character at index i of string S, counting from 1.
+S[i..j] denotes the substring of string S starting at index i and ending at j, inclusive.
+A prefix of S is a substring S[1..i] for some i in range [1, n], where n is the length of S.
+A suffix of S is a substring S[i..n] for some i in range [1, n], where n is the length of S.
+The string to be searched for is called the pattern and is denoted by P. Its length is n.
+The string being searched in is called the text and is denoted by T. Its length is m.
+An alignment of P to T is an index k in T such that the last character of P is aligned with index k of T.
+A match or occurrence of P occurs at an alignment if P is equivalent to T[(k-n+1)..k].
+Description
+The Boyer–Moore algorithm searches for occurrences of P in T by performing explicit
+character comparisons at different alignments. Instead of a brute-force search of all alig-
+nments (of which there are {\displaystyle m-n+1}m-n+1), Boyer–Moore uses information gained
+by preprocessing P to skip as many alignments as possible.
+
+Previous to the introduction of this algorithm, the usual way to search within text was
+to examine each character of the text for the first character of the pattern. Once that was
+found the subsequent characters of the text would be compared to the characters of the pat-
+tern. If no match occurred then the text would again be checked character by character in
+an effort to find a match. Thus almost every character in the text needs to be examined.
+
+The key insight in this algorithm is that if the end of the pattern is compared to the text,
+then jumps along the text can be made rather than checking every character of the text.
+The reason that this works is that in lining up the pattern against the text, the last charac-
+ter of the pattern is compared to the character in the text. If the characters do not match,
+there is no need to continue searching backwards along the text. If the character in the text
+does not match any of the characters in the pattern, then the next character in the text to
+check is located n characters farther along the text, where n is the length of the pat-
+tern. If the character in the text is in the pattern, then a partial shift of the pattern along
+the text is done to line up along the matching character and the process is repeated. Jum-
+ping along the text to make comparisons rather than checking every character in the text decreases
+the number of comparisons that have to be made, which is the key to the efficiency of the algorithm.
+
+More formally, the algorithm begins at alignment {\displaystyle k=n}k=n, so the start of P is
+aligned with the start of T. Characters in P and T are then compared starting at index n in P and k
+in T, moving backward. The strings are matched from the end of P to the start of P. The comparisons
+continue until either the beginning of P is reached (which means there is a match) or a mismatch
+occurs upon which the alignment is shifted forward (to the right) according to the maximum value
+permitted by a number of rules. The comparisons are performed again at the new alignment, and the pro-
+cess repeats until the alignment is shifted past the end of T, which means no further matches will be
+found.
+
+The shift rules are implemented as constant-time table lookups, using tables generated during
+the preprocessing of P.
+
+Shift rules
+A shift is calculated by applying two rules: the bad character rule and the good suffix rule.
+The actual shifting offset is the maximum of the shifts calculated by these rules.
+
+The bad character rule
+Description
+-	-	-	-	X	-	-	K	-	-	-
+A	N	P	A	N	M	A	N	A	M	-
+-	N	N	A	A	M	A	N	-	-	-
+-	-	-	N	N	A	A	M	A	N	-
+Demonstration of bad character rule with pattern NNAAMAN.
+The bad-character rule considers the character in T at which the comparison process failed 
+(assuming such a failure occurred). The next occurrence of that character to the left in P
+is found, and a shift which brings that occurrence in line with the mismatched occurrence in
+T is proposed. If the mismatched character does not occur to the left in P, a shift is pro-
+posed that moves the entirety of P past the point of mismatch.
+
+Preprocessing
+Methods vary on the exact form the table for the bad character rule should take, 
+but a simple constant-time lookup solution is as follows: create a 2D table which is 
+indexed first by the index of the character c in the alphabet and second by the in-
+dex i in the pattern. This lookup will return the occurrence of c in P with the 
+next-highest index {\displaystyle j<i}j<i or -1 if there is no such occurrence. The
+proposed shift will then be {\displaystyle i-j}i-j, with {\displaystyle O(1)}O(1)
+lookup time and {\displaystyle O(kn)}O(kn) space, assuming a finite alphabet of length k.
+
+The C and Java implementations below have a {\displaystyle O(k)}O(k) space complexity
+(make_delta1, makeCharTable). This is the same as the original delta1 and the BMH 
+bad character table. This table maps a character at position {\displaystyle i}i to shift
+by {\displaystyle \operatorname {len} (p)-1-i}{\displaystyle \operatorname {len} (p)-1-i},
+with the last instance -- the least shift amount -- taking precedence. All unused charac-
+ters are set as {\displaystyle \operatorname {len} (p)}{\displaystyle \operatorname {len}
+(p)} as a sentinel value.
+
+The good suffix rule
+Description
+-	-	-	-	X	-	-	K	-	-	-	-	-
+M	A	N	P	A	N	A	M	A	N	A	P	-
+A	N	A	M	P	N	A	M	-	-	-	-	-
+-	-	-	-	A	N	A	M	P	N	A	M	-
+Demonstration of good suffix rule with pattern ANAMPNAM.
+The good suffix rule is markedly more complex in both concept
+and implementation than the bad character rule. It is the reason
+comparisons begin at the end of the pattern rather than the
+start, and is formally stated thus:[5]
+
+Suppose for a given alignment of P and T, a substring t of T matches a suffix of P, but a
+mismatch occurs at the next comparison to the left. Then find, if it exists, the right-most
+copy t' of t in P such that t' is not a suffix of P and the character to the left of t' 
+in P differs from the character to the left of t in P. Shift P to the right so that sub-
+string t' in P aligns with substring t in T. If t' does not exist, then shift the left end
+of P past the left end of t in T by the least amount so that a prefix of the shifted pattern 
+matches a suffix of t in T. If no such shift is possible, then shift P by n places to the right.
+If an occurrence of P is found, then shift P by the least amount so that a proper pre-
+fix of the shifted P matches a suffix of the occurrence of P in T. If no such shift is possible,
+then shift P by n places, that is, shift P past t.
+
+Preprocessing
+The good suffix rule requires two
+tables: one for use in the general
+case, and another for use when either
+the general case returns no meaning-
+ful result or a match occurs. These
+tables will be designated L and H 
+respectively. Their definitions are 
+as follows:[5]
+
+For each i, {\displaystyle L[i]}L[i] is the largest position
+less than n such that string {\displaystyle P[i..n]}P[i..n] mat-
+ches a suffix of {\displaystyle P[1..L[i]]}P[1..L[i]] and 
+such that the character preceding that suffix is not equal to
+{\displaystyle P[i-1]}P[i-1]. {\displaystyle L[i]}L[i] is defi-
+ned to be zero if there is no position satisfying the condition.
+
+Let {\displaystyle H[i]}H[i] denote the length of the largest suffix of
+{\displaystyle P[i..n]}P[i..n] that is also a prefix of P, if one exists.
+If none exists, let {\displaystyle H[i]}H[i] be zero.
+
+Both of these tables are constructible in {\displaystyle O(n)}O(n) time and use {\displaystyle O(n)}O(n) 
+space. The alignment shift for index i in P is given by {\displaystyle n-L[i]}n-L[i] or {\displaystyle
+n-H[i]}n-H[i]. H should only be used if {\displaystyle L[i]}L[i] is zero or a match has been found.
+
+The Galil rule
+A simple but important optimization of Boyer–Moore
+was put forth by Galil in 1979.[6] As opposed to shif-
+ting, the Galil rule deals with speeding up the actual
+comparisons done at each alignment by skipping sec-
+tions that are known to match. Suppose that at an alig-
+nment k1, P is compared with T down to character c of 
+T. Then if P is shifted to k2 such that its left end is
+between c and k1, in the next comparison phase a prefix 
+of P must match the substring T[(k2 - n)..k1]. Thus if 
+the comparisons get down to position k1 of T, an occur-
+rence of P can be recorded without explicitly comparing
+past k1. In addition to increasing the efficiency of 
+Boyer–Moore, the Galil rule is required for proving
+linear-time execution in the worst case.
+
+The Galil rule, in its original version, is only effective for versions
+that output multiple matches. It updates the substring range only on c = 0, 
+i.e. a full match. A generalized version for dealing with submatches was 
+reported in 1985 as the Apostolico–Giancarlo algorithm.[7]
+
+Performance
+The Boyer–Moore algorithm as presented in the original paper has worst-case run-
+ning time of {\displaystyle O(n+m)}O(n+m) only if the pattern does not appear
+in the text. This was first proved by Knuth, Morris, and Pratt in 1977,[8] followed
+by Guibas and Odlyzko in 1980[9] with an upper bound of 5n comparisons in the worst
+case. Richard Cole gave a proof with an upper bound of 3n comparisons in the worst 
+case in 1991.[10]
+
+When the pattern does occur in the text, running time of the ori-
+ginal algorithm is {\displaystyle O(nm)}O(nm) in the worst case. 
+This is easy to see when both pattern and text consist solely of
+the same repeated character. However, inclusion of the Galil rule
+results in linear runtime across all cases.[6][10]
+
+Implementations
+Various implementations exist in different programming languages.
+In C++ it is part of the Standard Library since C++17, also Boost 
+provides the generic Boyer–Moore search implementation under the 
+Algorithm library. In Go (programming language) there is an implemen-
+tation in search.go. D (programming language) uses a BoyerMooreFinder
+for predicate based matching within ranges as a part of the Phobos 
+Runtime Library.
+
+The Boyer–Moore algorithm is also used in GNU's grep.[11]
+
+Below are a few simple implementations.
+
+Variants
+The Boyer–Moore–Horspool algorithm is a simplification of the Boyer–Moore algorithm using only the bad character rule.
+
+The Apostolico–Giancarlo algorithm speeds up the process of checking whether a match has occurred at the given
+alignment by skipping explicit character comparisons. This uses information gleaned during the pre-processing
+of the pattern in conjunction with suffix match lengths recorded at each match attempt. Storing suffix match 
+lengths requires an additional table equal in size to the text being searched.
+
+The Raita algorithm improves the performance of Boyer-Moore-Horspool algorithm. The searching pat-
+tern of particular sub-string in a given string is different from Boyer-Moore-Horspool algorithm.
